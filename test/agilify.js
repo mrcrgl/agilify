@@ -4,35 +4,36 @@ var chai = require('chai'),
     expect = chai.expect,
     tasks = require('./tasks');
 
-var Agilify = require('../lib/agilify'),
-    AgilifyTask = require('../lib/task');
+var agilify = require('../index'),
+    Agilify = agilify.Agilify,
+    AgilifyTask = agilify.AgilifyTask;
 
 describe('Agilify', function () {
 
     describe('registers Tasks', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
-            agilify.register('a', ['b', 'c'], tasks.a);
-            agilify.register('b', ['e', 'd'], tasks.b);
-            agilify.register('c', ['d', 'f'], tasks.c);
-            agilify.register('d', [], tasks.d);
-            agilify.register('e', [], tasks.e);
-            agilify.register('f', ['g'], tasks.f);
-            agilify.register('g', [], tasks.g);
+            taskJar = new Agilify();
+            taskJar.register('a', ['b', 'c'], tasks.a);
+            taskJar.register('b', ['e', 'd'], tasks.b);
+            taskJar.register('c', ['d', 'f'], tasks.c);
+            taskJar.register('d', [], tasks.d);
+            taskJar.register('e', [], tasks.e);
+            taskJar.register('f', ['g'], tasks.f);
+            taskJar.register('g', [], tasks.g);
 
             done();
         });
 
         it('registers given tasks', function (done) {
-            expect(agilify.tasks).to.have.length(7);
+            expect(taskJar.tasks).to.have.length(7);
 
             done();
         });
 
         it('converts tasks to {AgilifyTask}', function (done) {
-            agilify.tasks.forEach(function (task) {
+            taskJar.tasks.forEach(function (task) {
                 expect(task).to.be.instanceof(AgilifyTask);
             });
 
@@ -40,13 +41,13 @@ describe('Agilify', function () {
         });
 
         it('accepts Task instances, too', function (done) {
-            expect(agilify.tasks).to.have.length(7);
-            agilify.register(new AgilifyTask({
+            expect(taskJar.tasks).to.have.length(7);
+            taskJar.register(new AgilifyTask({
                 name: 'z',
                 dependencies: [],
                 fnc: function () {}
             }));
-            expect(agilify.tasks).to.have.length(8);
+            expect(taskJar.tasks).to.have.length(8);
 
             done();
         });
@@ -54,24 +55,24 @@ describe('Agilify', function () {
     });
 
     describe('taskByName', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
-            agilify.register('a', [], tasks.a);
+            taskJar = new Agilify();
+            taskJar.register('a', [], tasks.a);
 
             done();
         });
 
         it('returns {AgilifyTask} by name', function (done) {
-            expect(agilify.taskByName('a')).to.be.instanceof(AgilifyTask);
-            expect(agilify.taskByName('a')).to.have.property('name', 'a');
+            expect(taskJar.taskByName('a')).to.be.instanceof(AgilifyTask);
+            expect(taskJar.taskByName('a')).to.have.property('name', 'a');
 
             done();
         });
 
         it('returns undefined if task is not found', function (done) {
-            expect(agilify.taskByName('not there')).to.be.undefined;
+            expect(taskJar.taskByName('not there')).to.be.undefined;
 
             done();
         });
@@ -79,17 +80,17 @@ describe('Agilify', function () {
     });
 
     describe('makeTask', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
+            taskJar = new Agilify();
 
             done();
         });
 
         it('creates an {AgilifyTask} with args (name, dependencies, fnc)', function (done) {
             var deps = [],
-                task = agilify.makeTask('b', deps, function () {});
+                task = taskJar.makeTask('b', deps, function () {});
             expect(task).to.be.instanceof(AgilifyTask);
             expect(task).to.have.property('name', 'b');
             expect(task).to.have.property('dependencies', deps);
@@ -100,7 +101,7 @@ describe('Agilify', function () {
 
         it('uses function.name if name is not provided', function (done) {
             var deps = [],
-                task = agilify.makeTask(deps, function fncName() {});
+                task = taskJar.makeTask(deps, function fncName() {});
             expect(task).to.be.instanceof(AgilifyTask);
             expect(task).to.have.property('name', 'fncName');
             expect(task).to.have.property('dependencies', deps);
@@ -111,34 +112,34 @@ describe('Agilify', function () {
     });
 
     describe('addTask', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
+            taskJar = new Agilify();
 
             done();
         });
 
         it('adds an instance of {AgilifyTask} to task list', function (done) {
             var deps = [],
-                task = agilify.makeTask('b', deps, function () {});
+                task = taskJar.makeTask('b', deps, function () {});
 
-            agilify.addTask(task);
+            taskJar.addTask(task);
 
-            expect(agilify.taskByName('b')).to.be.instanceof(AgilifyTask);
-            expect(agilify.taskByName('b')).to.have.property('name', 'b');
+            expect(taskJar.taskByName('b')).to.be.instanceof(AgilifyTask);
+            expect(taskJar.taskByName('b')).to.have.property('name', 'b');
 
             done();
         });
 
         it('throws an Error if task is already registered', function (done) {
             var deps = [],
-                task = agilify.makeTask('b', deps, function () {});
+                task = taskJar.makeTask('b', deps, function () {});
 
-            agilify.addTask(task);
+            taskJar.addTask(task);
 
             var doIt = function () {
-                agilify.addTask(task);
+                taskJar.addTask(task);
             };
 
             expect(doIt).to.throw(Error);
@@ -148,10 +149,10 @@ describe('Agilify', function () {
 
         it('throws an Error if task does not provide an name', function (done) {
             var deps = [],
-                task = agilify.makeTask(deps, function () {});
+                task = taskJar.makeTask(deps, function () {});
 
             var doIt = function () {
-                agilify.addTask(task);
+                taskJar.addTask(task);
             };
 
             expect(doIt).to.throw(Error);
@@ -161,21 +162,21 @@ describe('Agilify', function () {
     });
 
     describe('taskDependencyList', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
+            taskJar = new Agilify();
 
             // relevant tasks
-            agilify.register('a', ['b', 'c'], tasks.a);
-            agilify.register('b', ['d'], tasks.b);
-            agilify.register('c', ['d'], tasks.c);
-            agilify.register('d', [], tasks.d);
+            taskJar.register('a', ['b', 'c'], tasks.a);
+            taskJar.register('b', ['d'], tasks.b);
+            taskJar.register('c', ['d'], tasks.c);
+            taskJar.register('d', [], tasks.d);
 
             // unused tasks
-            agilify.register('e', [], tasks.e);
-            agilify.register('f', ['g'], tasks.f);
-            agilify.register('g', [], tasks.g);
+            taskJar.register('e', [], tasks.e);
+            taskJar.register('f', ['g'], tasks.f);
+            taskJar.register('g', [], tasks.g);
 
             done();
         });
@@ -183,7 +184,7 @@ describe('Agilify', function () {
         it('returns an Array of all direct dependency tasks', function (done) {
             var emitter = new AgilifyTask({ dependencies: ['a'], fnc: function () {} });
 
-            var list = agilify.taskDependencyList(emitter),
+            var list = taskJar.taskDependencyList(emitter),
                 taskNames = list.map(function (t) { return t.name; });
 
             expect(taskNames).to.have.members(['a']);
@@ -195,7 +196,7 @@ describe('Agilify', function () {
         it('returns an Array of all required tasks to fulfill the need', function (done) {
             var emitter = new AgilifyTask({ dependencies: ['a'], fnc: function () {} });
 
-            var list = agilify.taskDependencyList(emitter, true),
+            var list = taskJar.taskDependencyList(emitter, true),
                 taskNames = list.map(function (t) { return t.name; });
 
             expect(taskNames).to.have.members(['a', 'b', 'c', 'd']);
@@ -207,34 +208,34 @@ describe('Agilify', function () {
     });
 
     describe('run', function () {
-        var agilify;
+        var taskJar;
 
         beforeEach(function (done) {
-            agilify = new Agilify();
+            taskJar = new Agilify();
 
             // relevant tasks
-            agilify.register('a', ['b', 'c'], function (b, c, callback) {
+            taskJar.register('a', ['b', 'c'], function (b, c, callback) {
                 callback(null, [(this && this.plus || '') + 'a'].concat(b, c));
             });
-            agilify.register('b', ['d'], function (d, callback) {
+            taskJar.register('b', ['d'], function (d, callback) {
                 callback(null, [(this && this.plus || '') + 'b'].concat(d));
             });
-            agilify.register('c', ['d'], function (d, callback) {
+            taskJar.register('c', ['d'], function (d, callback) {
                 callback(null, [(this && this.plus || '') + 'c'].concat(d));
             });
-            agilify.register('d', [], function (callback) {
+            taskJar.register('d', [], function (callback) {
                 callback(null, [(this && this.plus || '') + 'd']);
             });
 
-            agilify.register('err', [], function (callback) {
+            taskJar.register('err', [], function (callback) {
                 callback(new Error('Dummy error'));
             });
 
-            agilify.register('err2', [], function () {
+            taskJar.register('err2', [], function () {
                 throw new Error('Dummy error');
             });
 
-            agilify.register('double', [], function (callback) {
+            taskJar.register('double', [], function (callback) {
                 callback();
                 callback();
             });
@@ -243,7 +244,7 @@ describe('Agilify', function () {
         });
 
         it('dissolves the chain of tasks without an context', function (done) {
-            agilify.run(['a'], function (err, a) {
+            taskJar.run(['a'], function (err, a) {
                 a.sort();
 
                 expect(err).to.be.not.ok;
@@ -253,7 +254,7 @@ describe('Agilify', function () {
         });
 
         it('dissolves the chain of tasks with an context', function (done) {
-            agilify.run(['a'], { plus: '+' }, function (err, a) {
+            taskJar.run(['a'], { plus: '+' }, function (err, a) {
                 a.sort();
 
                 expect(err).to.be.not.ok;
@@ -264,7 +265,7 @@ describe('Agilify', function () {
         });
 
         it('executes the emitter, even if it does not depend on something', function (done) {
-            agilify.run(function (err) {
+            taskJar.run(function (err) {
 
                 expect(err).to.be.instanceof(Error);
                 done();
@@ -272,7 +273,7 @@ describe('Agilify', function () {
         });
 
         it('provides an error if a task reports one', function (done) {
-            agilify.run(['err'], function (err) {
+            taskJar.run(['err'], function (err) {
 
                 expect(err).to.be.instanceof(Error);
                 done();
@@ -280,7 +281,7 @@ describe('Agilify', function () {
         });
 
         it('provides an error if a task throws one', function (done) {
-            agilify.run(['err2'], function (err) {
+            taskJar.run(['err2'], function (err) {
 
                 expect(err).to.be.instanceof(Error);
                 done();
@@ -288,7 +289,7 @@ describe('Agilify', function () {
         });
 
         it('provides an error if a task calls its callback twice', function (done) {
-            agilify.run(['double'], function (err) {
+            taskJar.run(['double'], function (err) {
                 expect(err).to.be.instanceof(Error);
                 done();
             });

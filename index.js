@@ -1,64 +1,47 @@
 'use strict';
 
 var Agilify = require('./lib/agilify'),
-    AgilifyTask = require('./lib/task');
+    AgilifyTask = require('./lib/task'),
+    AgilifyProcess = require('./lib/process');
 
-function a() {
-    var done = arguments[arguments.length - 1];
-    setTimeout(function () {
-        done(null, 300);
-    }, 100);
-}
-
-function b(done) {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-function c(done) {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-function d(done) {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-function e(done) {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-function f(done) {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-function g() {
-    setTimeout(arguments[arguments.length - 1], 100);
-}
-
-var agilify = new Agilify();
-agilify.register('a', ['b', 'c'], a);
-agilify.register('b', ['e', 'd'], b);
-agilify.register('c', ['d', 'f'], c);
-agilify.register('d', [], d);
-agilify.register('e', [], e);
-agilify.register('f', ['g'], f);
-agilify.register('g', [], g);
-
-agilify.run(['a'], function (result) {
-    console.log('done', result);
-});
-
-agilify.run(['a'], function (result) {
-    console.log('done2', result);
-});
-
-/*setTimeout(function () {
-    console.log(agilify.tasks.filter(function (t) {
-        return t.dependenciesFulfilled();
-    }).length, 'tasks not fulfilled');
-}, 1000);*/
-
-console.log('a.name', a.name);
-
+/**
+ *
+ * @param [name]         {String}        Name of Task, defaults to function.name
+ * @param [dependencies] {Array<String>} List of dependency names
+ * @param fnc            {Function}      Function to call
+ * @returns {AgilifyTask}
+ */
 function define(name, dependencies, fnc) {
+    if (arguments.length !== 3) {
+        dependencies = Array.isArray(dependencies) && dependencies || [];
+        name = !Array.isArray(arguments[0]) && arguments[0];
+        fnc = arguments[arguments.length - 1];
+    }
 
+    return new AgilifyTask({
+        name: name,
+        dependencies: dependencies,
+        fnc: fnc
+    });
 }
+
+/**
+ * Get a new agilify task jar
+ *
+ * @param [tasks] {Array<AgilifyTask>}
+ * @returns {Agilify}
+ */
+function agilify(tasks) {
+    if (tasks && !Array.isArray(tasks)) {
+        throw new Error('expected array task list');
+    }
+
+    return new Agilify(tasks);
+}
+
+agilify.define = define;
+agilify.Agilify = Agilify;
+agilify.AgilifyTask = AgilifyTask;
+agilify.AgilifyProcess = AgilifyProcess;
+
+module.exports = agilify;
