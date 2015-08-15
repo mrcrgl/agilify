@@ -14,15 +14,25 @@ var Agilify = require('./lib/agilify'),
 function define(name, dependencies, fnc) {
     if (arguments.length !== 3) {
         dependencies = Array.isArray(dependencies) && dependencies || [];
-        name = !Array.isArray(arguments[0]) && arguments[0];
+        name = 'string' === typeof arguments[0] && arguments[0];
         fnc = arguments[arguments.length - 1];
     }
 
-    return new AgilifyTask({
+    if (!fnc) {
+        throw new Error('argument fnc is required');
+    }
+
+    var task = new AgilifyTask({
         name: name,
         dependencies: dependencies,
         fnc: fnc
     });
+
+    if (!task.name) {
+        throw new Error('AgilifyTask name is required, either a string or a named function');
+    }
+
+    return task;
 }
 
 /**
