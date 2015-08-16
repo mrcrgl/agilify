@@ -184,7 +184,7 @@ describe('Agilify', function () {
         it('returns an Array of all direct dependency tasks', function (done) {
             var emitter = new AgilifyTask({ dependencies: ['a'], fnc: function () {} });
 
-            var list = taskJar.taskDependencyList(emitter),
+            var list = taskJar._taskDependencyList(emitter),
                 taskNames = list.map(function (t) { return t.name; });
 
             expect(taskNames).to.have.members(['a']);
@@ -196,7 +196,7 @@ describe('Agilify', function () {
         it('returns an Array of all required tasks to fulfill the need', function (done) {
             var emitter = new AgilifyTask({ dependencies: ['a'], fnc: function () {} });
 
-            var list = taskJar.taskDependencyList(emitter, true),
+            var list = taskJar._taskDependencyList(emitter, true),
                 taskNames = list.map(function (t) { return t.name; });
 
             expect(taskNames).to.have.members(['a', 'b', 'c', 'd']);
