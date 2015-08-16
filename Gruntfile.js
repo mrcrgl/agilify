@@ -57,6 +57,15 @@ module.exports = function (grunt) {
         }
     });
 
+    grunt.event.on('coverage', function (lcov, done) {
+        require('coveralls').handleInput(lcov, function (err) {
+            if (err) {
+                return done(err);
+            }
+            done();
+        });
+    });
+
     grunt.registerTask('test', ['env:test', 'jshint', 'jscs', 'mochaTest:test']);
     grunt.registerTask('cover', ['env:test', 'jshint', 'jscs', 'mocha_istanbul']);
 };
