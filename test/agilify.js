@@ -227,6 +227,30 @@ describe('Agilify', function () {
                 callback(null, [(this && this.plus || '') + 'd']);
             });
 
+            taskJar.register('circular-a', ['circular-b'], function (b, callback) {
+                callback(null, [(this && this.plus || '') + 'c-a'].concat(b));
+            });
+
+            taskJar.register('circular-b', ['circular-a'], function (a, callback) {
+                callback(null, [(this && this.plus || '') + 'c-b'].concat(a));
+            });
+
+            taskJar.register('long-running-a', [], function (callback) {
+                setTimeout(function () {
+                    callback(null, [(this && this.plus || '') + 'long-a']);
+                }.bind(this), 100);
+            });
+
+            taskJar.register('long-running-b', ['long-running-a', 'd'], function (long_a, d, callback) {
+                setTimeout(function () {
+                    callback(null, [(this && this.plus || '') + 'long-b'].concat(long_a, d));
+                }.bind(this), 100);
+            });
+
+            taskJar.register('should-not-be-executed', [], function (callback) {
+                throw new Error('Unrelated dependency executed');
+            });
+
             taskJar.register('err', [], function (callback) {
                 callback(new Error('Dummy error'));
             });
@@ -247,7 +271,7 @@ describe('Agilify', function () {
             taskJar.run(['a'], function (err, a) {
                 a.sort();
 
-                expect(err).to.be.not.ok;
+                expect(err).to.be.null;
                 expect(a).to.deep.equal(['a', 'b', 'c', 'd', 'd']);
                 done();
             });
@@ -257,9 +281,28 @@ describe('Agilify', function () {
             taskJar.run(['a'], { plus: '+' }, function (err, a) {
                 a.sort();
 
-                expect(err).to.be.not.ok;
+                expect(err).to.be.null;
                 expect(a).to.deep.equal(['+a', '+b', '+c', '+d', '+d']);
                 expect(this.plus).to.equal('+');
+                done();
+            });
+        });
+
+        it('does not invoke the emitter until all dependencies are fulfilled', function (done) {
+            taskJar.run(['long-running-b', 'd'], function (err, long_a, d) {
+                expect(err).to.be.null;
+
+                long_a.sort();
+                expect(long_a).to.deep.equal(['d', 'long-a', 'long-b']);
+                expect(d).to.deep.equal(['d']);
+                done();
+            });
+        });
+
+        it('detects circular dependencies gracefully and returns an Error', function (done) {
+            taskJar.run(['circular-a'], function (err) {
+                expect(err).to.be.instanceof(Error, /^Task is circular dependent:/);
+
                 done();
             });
         });
